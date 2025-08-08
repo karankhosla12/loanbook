@@ -168,6 +168,35 @@
     <script>
         // REPLACE THIS WITH YOUR DEPLOYED WEB APP URL
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwsjM3bfV52QOppUAVapmYx60tifKqd5RBKuFISWfpW6OziJDANz2ebehGNraTd-S3H/exec';
+        
+        // This function runs when the page loads to check the session
+        document.addEventListener('DOMContentLoaded', (event) => {
+            checkLoginStatus();
+        });
+
+        function checkLoginStatus() {
+            const lastLogin = localStorage.getItem('lastLogin');
+            if (lastLogin) {
+                const oneDay = 24 * 60 * 60 * 1000; // milliseconds in 24 hours
+                const currentTime = new Date().getTime();
+                
+                // If less than 24 hours have passed, show the dashboard
+                if (currentTime - lastLogin < oneDay) {
+                    showDashboard();
+                } else {
+                    // Session expired, clear storage and show login
+                    localStorage.removeItem('lastLogin');
+                    showLogin();
+                }
+            } else {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('login-container').style.display = 'block';
+            document.getElementById('dashboard-container').style.display = 'none';
+        }
 
         function showDashboard() {
             document.getElementById('login-container').style.display = 'none';
@@ -190,12 +219,14 @@
                     method: 'POST',
                     body: JSON.stringify(payload),
                     headers: {
-                        'Content-Type': 'text/plain' // Apps Script requires this for JSON
+                        'Content-Type': 'text/plain'
                     }
                 });
                 const result = await response.json();
 
                 if (result.success) {
+                    // On successful login, save a timestamp
+                    localStorage.setItem('lastLogin', new Date().getTime());
                     showDashboard();
                 } else {
                     errorMessage.textContent = result.message;
@@ -220,13 +251,13 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    pendingAmountEl.textContent = `$${result.pendingAmount.toLocaleString()}`;
-                    totalPaidEl.textContent = `$${result.overallTotal.toLocaleString()}`;
+                    pendingAmountEl.textContent = `${result.pendingAmount.toLocaleString()}`;
+                    totalPaidEl.textContent = `${result.overallTotal.toLocaleString()}`;
 
                     paymentDetailsEl.innerHTML = '';
                     for (const person in result.personTotals) {
                         const li = document.createElement('li');
-                        li.textContent = `${person}: $${result.personTotals[person].toLocaleString()}`;
+                        li.textContent = `${person}: ${result.personTotals[person].toLocaleString()}`;
                         paymentDetailsEl.appendChild(li);
                     }
                 } else {

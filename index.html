@@ -168,7 +168,7 @@
     <script>
         // REPLACE THIS WITH YOUR DEPLOYED WEB APP URL
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwsjM3bfV52QOppUAVapmYx60tifKqd5RBKuFISWfpW6OziJDANz2ebehGNraTd-S3H/exec';
-        
+
         // This function runs when the page loads to check the session
         document.addEventListener('DOMContentLoaded', (event) => {
             checkLoginStatus();
@@ -251,13 +251,20 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    pendingAmountEl.textContent = `${result.pendingAmount.toLocaleString()}`;
-                    totalPaidEl.textContent = `${result.overallTotal.toLocaleString()}`;
+                    // Format numbers to Indian Rupee with correct commas and symbol
+                    const formatOptions = {
+                        style: 'currency',
+                        currency: 'INR',
+                        minimumFractionDigits: 0
+                    };
+                    
+                    pendingAmountEl.textContent = new Intl.NumberFormat('en-IN', formatOptions).format(result.pendingAmount);
+                    totalPaidEl.textContent = new Intl.NumberFormat('en-IN', formatOptions).format(result.overallTotal);
 
                     paymentDetailsEl.innerHTML = '';
                     for (const person in result.personTotals) {
                         const li = document.createElement('li');
-                        li.textContent = `${person}: ${result.personTotals[person].toLocaleString()}`;
+                        li.textContent = `${person}: ${new Intl.NumberFormat('en-IN', formatOptions).format(result.personTotals[person])}`;
                         paymentDetailsEl.appendChild(li);
                     }
                 } else {
@@ -281,7 +288,7 @@
             const messageEl = document.getElementById('add-row-message');
 
             const payload = {
-                date: new Date().toLocaleDateString(),
+                date: new Date().toLocaleDateString('en-IN'), // Also format the date for consistency
                 givenBy: givenBy,
                 amount: parseFloat(amount)
             };
